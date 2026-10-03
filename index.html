@@ -21,6 +21,15 @@
 <style>
 :root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 html,body,#root{height:100%;margin:0;background:#f3f6fb;color:#0f172a;font-family:Manrope,Inter,system-ui,-apple-system,Segoe UI,sans-serif;color-scheme:light}
+
+@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+@keyframes shine{0%{background-position:0% 50%}100%{background-position:200% 50%}}
+@keyframes pop{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+.lp-float{animation:floaty 5s ease-in-out infinite}
+.lp-shine{background:linear-gradient(90deg,#fde047,#fb7185,#a78bfa,#38bdf8,#fde047);background-size:200% auto;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 6s linear infinite}
+.lp-pop{animation:pop .7s ease both}
+.lp-card{transition:transform .25s,box-shadow .25s}.lp-card:hover{transform:translateY(-6px) scale(1.02);box-shadow:0 18px 40px rgba(0,0,0,.35)}
+.lp-btn{transition:transform .2s,box-shadow .2s}.lp-btn:hover{transform:translateY(-2px) scale(1.04)}
 </style>
 </head>
 <body>
@@ -1431,7 +1440,7 @@ const copyText=t=>{if(navigator.clipboard&&navigator.clipboard.writeText)return 
 const SUPABASE_URL="https://rgbqcpzgqzfgnlbzcxai.supabase.co";
 const SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJnYnFjcHpncXpmZ25sYnpjeGFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1MzY5ODIsImV4cCI6MjEwNjExMjk4Mn0.AaLLft9Y3jDhMsQNm2UC_4fVkTbAmRqodJ_qsWFYXK8";
 const SB=(()=>{try{if(!SUPABASE_URL||!SUPABASE_ANON_KEY||!window.supabase)return null;return window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}})}catch(e){return null}})();
-const CLOUD=!!SB; const IS_FILE=location.protocol==="file:";
+const CLOUD=!!SB; const IS_FILE=location.protocol==="file:"; const SITE_URL=IS_FILE?undefined:(/^(localhost|127\.0\.0\.1)$/.test(location.hostname)?location.origin:"https://dim-academy.com");
 const rpc=async(fn,args)=>{const r=await SB.rpc(fn,args||{});if(r.error)throw new Error(r.error.message);return r.data};
 const msgOf=e=>{const m=String((e&&e.message)||e||"");if(/invalid login/i.test(m))return"E-poçt və ya parol səhvdir.";if(/not confirmed/i.test(m))return"E-poçt hələ təsdiqlənməyib. Poçt qutunuzdakı təsdiq linkinə basın.";if(/already registered|already been registered/i.test(m))return"Bu e-poçt artıq qeydiyyatdan keçib. Giriş edin.";if(/rate limit/i.test(m))return"Çox cəhd edildi. Bir az gözləyib yenidən yoxlayın.";return m||"Xəta baş verdi."};
 /* server qrupunu (my_groups/create_group cavabı) saytın köhnə qrup formasına çevirir:
@@ -1461,19 +1470,49 @@ function useCloudGroups(user,on){
   return{groups,ready,err,reload,add}
 }
 
-function Auth({onAuth}){
-  const [mode,setMode]=useState("login");
+function Landing({onStart}){
+  const feats=[["📚","Test sualları","Fənn və qruplar üzrə sual bazası, çətinlik səviyyələri ilə."],["💡","Ətraflı izahlar","Hər sualın həlli addım-addım izah olunur."],["🗓️","Planlayıcı","Hazırlığını gün-gün planla, irəliləyişini izlə."],["👩‍🏫","Müəllim–şagird qrupları","Müəllim tapşırıq verir, şagird göndərir, nəticə dərhal görünür."]];
+  const stats=[[Object.keys(GROUPS).length,"imtahan qrupu"],[ALL.length,"fənn"],["24/7","hər cihazdan"]];
+  const blobs=[["-top-24 -left-24","#8b5cf6"],["top-1/3 -right-32","#ec4899"],["-bottom-24 left-1/4","#06b6d4"]];
+  return h`<div className="min-h-screen relative overflow-hidden text-white" style=${{background:"linear-gradient(135deg,#1e1b4b 0%,#4c1d95 45%,#be185d 100%)"}}>
+    ${blobs.map((b,i)=>h`<div key=${i} className=${"absolute w-96 h-96 rounded-full blur-3xl opacity-40 lp-float "+b[0]} style=${{background:b[1],animationDelay:i*1.3+"s"}}></div>`)}
+    <div className="relative max-w-5xl mx-auto px-5 py-6">
+      <div className="flex items-center justify-between">
+        <div className="font-extrabold tracking-widest text-sm">🎓 DİM HAZIRLIQ</div>
+        <button className="lp-btn text-sm font-bold px-4 py-2 rounded-xl bg-white/15 border border-white/30 hover:bg-white/25" onClick=${()=>onStart("login")}>Giriş</button>
+      </div>
+      <div className="text-center pt-12 pb-10 lp-pop">
+        <div className="inline-block text-xs font-bold px-3 py-1 rounded-full bg-white/15 border border-white/30 mb-5">✨ Abituriyentlər üçün pulsuz platforma</div>
+        <h1 className="text-4xl sm:text-6xl font-extrabold leading-tight">DİM imtahanına<br/><span className="lp-shine">uğurla hazırlaş!</span></h1>
+        <p className="mt-5 text-base sm:text-lg text-white/85 max-w-xl mx-auto">Test sualları, izahlar, planlayıcı və tapşırıqlar — hamısı bir yerdə. Müəllimlərin yaratdığı qruplara qoşul və hər gün irəlilə.</p>
+        <div className="mt-8 flex flex-wrap gap-3 justify-center">
+          <button className="lp-btn px-7 py-3 rounded-2xl font-extrabold text-indigo-900 shadow-xl" style=${{background:"linear-gradient(90deg,#fde047,#fb923c)"}} onClick=${()=>onStart("register")}>🚀 Qeydiyyatdan keç</button>
+          <button className="lp-btn px-7 py-3 rounded-2xl font-bold bg-white/15 border border-white/40 hover:bg-white/25" onClick=${()=>onStart("login")}>Daxil ol →</button>
+        </div>
+        <div className="mt-10 flex justify-center gap-4 sm:gap-10">
+          ${stats.map((s,i)=>h`<div key=${i}><div className="text-3xl sm:text-4xl font-extrabold lp-shine">${s[0]}</div><div className="text-xs text-white/70 mt-1">${s[1]}</div></div>`)}
+        </div>
+      </div>
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 pb-8">
+        ${feats.map((f,i)=>h`<div key=${i} className="lp-card lp-pop rounded-3xl p-5 bg-white/10 backdrop-blur border border-white/20" style=${{animationDelay:(.15*i)+"s"}}><div className="text-3xl mb-2">${f[0]}</div><div className="font-extrabold mb-1">${f[1]}</div><div className="text-sm text-white/80">${f[2]}</div></div>`)}
+      </div>
+      <div className="text-center text-xs text-white/60 pb-4">I–V qrup: Riyazi-Texniki · İqtisadi · Humanitar · Təbiət · Xarici dil</div>
+    </div></div>`;
+}
+
+function Auth({onAuth,initMode,onBack}){
+  const [mode,setMode]=useState(initMode||"login");
   const [email,setEmail]=useState(""); const [pw,setPw]=useState(""); const [pw2,setPw2]=useState(""); const [nm,setNm]=useState(""); const [role,setRole]=useState(""); const [err,setErr]=useState(""); const [okm,setOkm]=useState(""); const [busy,setBusy]=useState(false);
   const k=()=>email.trim().toLowerCase();
   const sw=m=>{setMode(m);setErr("");setOkm("")};
   const loginC=async()=>{if(busy)return;setBusy(true);setErr("");try{const r=await SB.auth.signInWithPassword({email:k(),password:pw});if(r.error)throw r.error;const u=await cloudProfile(r.data.session);if(!u)throw new Error("Profil tapılmadı.");onAuth(u)}catch(e){setErr(msgOf(e))}finally{setBusy(false)}};
   const login=()=>{if(CLOUD)return loginC();const u=ld("dimusers",{})[k()];if(!u)return setErr("Bu e-poçtla hesab tapılmadı. Əvvəlcə qeydiyyatdan keçin.");if(u.pw!==pw)return setErr("Parol səhvdir.");onAuth({email:k(),name:u.name,role:u.role})};
-  const regC=async()=>{if(busy)return;setBusy(true);setErr("");try{const r=await SB.auth.signUp({email:k(),password:pw,options:{data:{full_name:nm.trim(),role}}});if(r.error)throw r.error;if(r.data.user&&Array.isArray(r.data.user.identities)&&r.data.user.identities.length===0){setErr("Bu e-poçt artıq qeydiyyatdan keçib. Giriş edin.");return}if(!r.data.session){setOkm("Təsdiq linki "+k()+" ünvanına göndərildi. Linkə basın və daxil olun.");return}const u=await cloudProfile(r.data.session,{name:nm.trim(),role});if(!u)throw new Error("Profil yaradıla bilmədi.");onAuth(u)}catch(e){setErr(msgOf(e))}finally{setBusy(false)}};
+  const regC=async()=>{if(busy)return;setBusy(true);setErr("");try{const r=await SB.auth.signUp({email:k(),password:pw,options:{data:{full_name:nm.trim(),role},emailRedirectTo:SITE_URL}});if(r.error)throw r.error;if(r.data.user&&Array.isArray(r.data.user.identities)&&r.data.user.identities.length===0){setErr("Bu e-poçt artıq qeydiyyatdan keçib. Giriş edin.");return}if(!r.data.session){setOkm("Təsdiq linki "+k()+" ünvanına göndərildi. Linkə basın və daxil olun.");return}const u=await cloudProfile(r.data.session,{name:nm.trim(),role});if(!u)throw new Error("Profil yaradıla bilmədi.");onAuth(u)}catch(e){setErr(msgOf(e))}finally{setBusy(false)}};
   const reg=()=>{if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(k()))return setErr("Düzgün e-poçt ünvanı daxil edin (məsələn: ad@gmail.com).");if(pw.length<6)return setErr("Parol ən azı 6 simvol olmalıdır.");if(pw!==pw2)return setErr("Parollar uyğun gəlmir.");if(!nm.trim())return setErr("Adınızı və soyadınızı yazın.");if(!role)return setErr("Rolunuzu seçin: müəllim və ya şagird.");if(CLOUD)return regC();const us=ld("dimusers",{});if(us[k()])return setErr("Bu e-poçt artıq qeydiyyatdan keçib. Giriş edin.");us[k()]={pw,name:nm.trim(),role};sv("dimusers",us);onAuth({email:k(),name:nm.trim(),role})};
   const tab=t=>h`<button onClick=${()=>sw(t)} className=${"flex-1 py-2 rounded-xl text-sm font-semibold transition "+(mode===t?"bg-amber-600 text-white":"bg-stone-100 text-stone-600 hover:bg-stone-200")}>${t==="login"?"Giriş":"Qeydiyyat"}</button>`;
   const roleBtn=(r,ic2,tt)=>h`<button type="button" onClick=${()=>setRole(r)} className=${"flex-1 p-3 rounded-xl border text-sm font-semibold "+(role===r?"border-amber-600 bg-amber-50 text-amber-900":"border-stone-300 bg-white text-stone-600 hover:bg-stone-50")}><span className="text-xl block mb-1">${ic2}</span>${tt}</button>`;
   return h`<div className="min-h-screen flex items-center justify-center p-4" style=${{background:"linear-gradient(135deg,#101a33 0%,#1e293b 55%,#312e81 100%)"}}><div className="w-full max-w-md">
-    <div className="text-center mb-6"><div className="text-xs tracking-[.35em] text-amber-400 font-bold">DİM HAZIRLIQ</div><h1 className="text-3xl font-extrabold text-white mt-2">${mode==="login"?"Xoş gəlmisiniz!":"Hesab yaradın"}</h1><p className="text-stone-300 text-sm mt-1">${mode==="login"?"E-poçt və parolunuzla daxil olun.":"E-poçt (gmail) və parol ilə qeydiyyatdan keçin."}</p></div>
+    ${onBack&&h`<button type="button" onClick=${onBack} className="text-xs text-white/70 hover:text-white mb-3">← Ana səhifə</button>`}<div className="text-center mb-6"><div className="text-xs tracking-[.35em] text-amber-400 font-bold">DİM HAZIRLIQ</div><h1 className="text-3xl font-extrabold text-white mt-2">${mode==="login"?"Xoş gəlmisiniz!":"Hesab yaradın"}</h1><p className="text-stone-300 text-sm mt-1">${mode==="login"?"E-poçt və parolunuzla daxil olun.":"E-poçt (gmail) və parol ilə qeydiyyatdan keçin."}</p></div>
     <${Card}>
       <div className="flex gap-2 mb-4">${tab("login")}${tab("register")}</div>
       <label className="text-xs font-bold text-stone-600 block mb-1">E-poçt (Gmail)</label>
@@ -1486,7 +1525,7 @@ function Auth({onAuth}){
       ${err&&h`<div className="text-xs text-red-700 bg-red-50 border border-red-200 rounded-xl p-2 mb-3">${err}</div>`}
       ${okm&&h`<div className="text-xs text-green-800 bg-green-50 border border-green-200 rounded-xl p-2 mb-3">${okm}</div>`}
       <${Btn} dis=${busy} c="w-full py-3 text-base" onClick=${mode==="login"?login:reg}>${mode==="login"?"Daxil ol →":"Qeydiyyatdan keç →"}<//>
-      ${mode==="login"&&h`<div className="flex justify-between mt-3"><button type="button" className="text-xs text-stone-500 underline" onClick=${()=>{if(!k())return setErr("Əvvəlcə yuxarıda e-poçtunuzu yazın, sonra bu düyməyə basın.");if(CLOUD){SB.auth.resetPasswordForEmail(k(),IS_FILE?{}:{redirectTo:location.origin+location.pathname}).then(r=>{if(r.error)setErr(msgOf(r.error));else{setErr("");setOkm("Parolu sıfırlama linki "+k()+" ünvanına göndərildi.")}});return}const u=ld("dimusers",{})[k()];if(!u)return setErr("Bu e-poçtla hesab tapılmadı. Əvvəlcə qeydiyyatdan keçin.");setErr("");setPw(u.pw);setOkm("Parolunuz parol xanasına yazıldı: "+u.pw+" — indi “Daxil ol →” düyməsini basın.")}}>Parolumu unutdum</button><button type="button" className="text-xs text-amber-700 font-semibold underline" onClick=${()=>sw("register")}>Hesabım yoxdur</button></div>`}
+      ${mode==="login"&&h`<div className="flex justify-between mt-3"><button type="button" className="text-xs text-stone-500 underline" onClick=${()=>{if(!k())return setErr("Əvvəlcə yuxarıda e-poçtunuzu yazın, sonra bu düyməyə basın.");if(CLOUD){SB.auth.resetPasswordForEmail(k(),IS_FILE?{}:{redirectTo:SITE_URL}).then(r=>{if(r.error)setErr(msgOf(r.error));else{setErr("");setOkm("Parolu sıfırlama linki "+k()+" ünvanına göndərildi.")}});return}const u=ld("dimusers",{})[k()];if(!u)return setErr("Bu e-poçtla hesab tapılmadı. Əvvəlcə qeydiyyatdan keçin.");setErr("");setPw(u.pw);setOkm("Parolunuz parol xanasına yazıldı: "+u.pw+" — indi “Daxil ol →” düyməsini basın.")}}>Parolumu unutdum</button><button type="button" className="text-xs text-amber-700 font-semibold underline" onClick=${()=>sw("register")}>Hesabım yoxdur</button></div>`}
     <//>
     <p className="text-center text-xs text-stone-400 mt-4">${CLOUD?"Hesablar və qruplar Supabase-də saxlanılır (cross-device).":"Hesablar bu cihazın yaddaşında (localStorage) saxlanılır — demo rejimdir."}</p>
   </div></div>`;
@@ -1708,14 +1747,16 @@ function Grading({D}){
 
 function App(){
   const [user,setUser]=useState(()=>CLOUD?null:ld("dimuser",null));
-  const [boot,setBoot]=useState(CLOUD);
+  const [boot,setBoot]=useState(CLOUD); const [entry,setEntry]=useState(null);
   useEffect(()=>{if(!CLOUD)return;let on=true;
     SB.auth.getSession().then(async r=>{const ss=r&&r.data&&r.data.session;if(ss){try{const u=await cloudProfile(ss);if(on&&u)setUser(u)}catch(e){}}if(on)setBoot(false)}).catch(()=>{if(on)setBoot(false)});
     const sub=SB.auth.onAuthStateChange((ev)=>{if(ev==="SIGNED_OUT")setUser(null);if(ev==="PASSWORD_RECOVERY")setTimeout(()=>{const p=window.prompt("Yeni parolu yazın (ən azı 6 simvol):");if(p&&p.length>=6)SB.auth.updateUser({password:p}).then(r=>alert(r.error?msgOf(r.error):"Parol yeniləndi."))},300)});
     return()=>{on=false;try{sub.data.subscription.unsubscribe()}catch(e){}}},[]);
   const logout=()=>{if(CLOUD){SB.auth.signOut().catch(()=>{}).then(()=>setUser(null))}else{sv("dimuser",null);setUser(null)}};
   if(boot)return h`<div className="min-h-screen flex items-center justify-center text-stone-500 text-sm">Yüklənir…</div>`;
-  if(!user)return h`<${Auth} onAuth=${u=>{setUser(u);if(!CLOUD)sv("dimuser",u)}}/>`;
+  if(!user){const hasLink=/[?&#]qrup=/.test(location.search+location.hash);
+    if(!entry&&!hasLink)return h`<${Landing} onStart=${m=>setEntry(m)}/>`;
+    return h`<${Auth} initMode=${entry||(hasLink?"register":"login")} onBack=${entry?()=>setEntry(null):null} onAuth=${u=>{setUser(u);if(!CLOUD)sv("dimuser",u)}}/>`}
   return h`<${Main} user=${user} logout=${logout}/>`;
 }
 const SUBSEED=[{id:1,aid:1,student:"Aysel",text:"Diskriminant D=b²−4ac düsturu ilə tapılır. Tənliyin kökləri 1 və 3-dür, Vyet teoreminə görə cəmi 4, hasili 3.",score:null,fb:"",by:null},{id:2,aid:1,student:"Rauf",text:"Kökləri tapdım: 1 və 3.",score:null,fb:"",by:null}];
